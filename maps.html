@@ -1,0 +1,152 @@
+<!-- add photos
+world population API population.io (population of country)-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8"></meta>
+    <title>Weather map</title>
+  </head>
+
+  <body>
+    <h1>Google/OpenWeather map</h1>
+    <div id="map" style="width:100%;height:400px;"></div>
+    <div id="divcontent">
+
+    </div>
+  </body>
+
+  <script>
+
+  function initMap() {
+    var myLatLng = {lat: 41.69323, lng: -8.83287}; //Viana do Castelo coordinates
+    var divcontent = document.getElementById("divcontent");
+    var lat;
+    var lon;
+    var map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 8,
+      center: myLatLng //map is centered at Viana do Castelo coordinates
+    });
+
+
+    var marker = new google.maps.Marker({
+      position: {lat: 41.69323, lng: -8.83287},
+      map: map, // marker is put on Viana do Castelo
+    });
+
+
+    google.maps.event.addListener(map, 'click', function(evt){
+      lat = evt.latLng.lat();
+      lon = evt.latLng.lng();
+      console.log(lat + ',' +lon);
+      var latlng = new google.maps.LatLng(lat, lon);
+      marker.setPosition(latlng); //we set the marker on the clicked coordinates
+    });
+
+      //function that gets pictures from clicked location
+
+      function flickrPics(name) {
+
+        divcontent = document.getElementById("divcontent");
+
+        base_url = "https://api.flickr.com/services/rest/?";
+
+        method = "method=flickr.photos.search";
+        api_key= "api_key=e9701d7bc0a166d9c9ec46853bd3418d";
+        format = "format=json";
+        nojsoncallback = "nojsoncallback=1"
+        text = "text=" + String(name);
+        per_page = "per_page=16";
+        extras = "extras=url_q";
+        sort = "sort=interestingness-desc"
+
+        call_url =  base_url +
+              method   + "&" +
+              api_key  + "&" +
+              format   + "&" +
+              nojsoncallback + "&" +
+              extras 	 + "&" +
+              per_page + "&" +
+              sort + "&" +
+              text;
+
+        //console.log(call_url);
+
+        // new request
+        request = new XMLHttpRequest();
+
+        // initialie the request
+        request.open("GET", call_url);
+
+        // register the handler
+        request.onreadystatechange = function () {
+          //console.log(request.readyState);
+          if (request.readyState == 4 && request.status == 200) {
+            photosJS = JSON.parse(request.responseText);
+            console.log(request.responseText);
+
+            for(i=0; i<photosJS.photos.photo.length; i++) {
+              newimg = document.createElement("img");
+              newimg.setAttribute("src",photosJS.photos.photo[i].url_q);
+
+              divcontent.appendChild(newimg);
+            }
+            //console.log(photosJS);
+          }
+        }
+
+        // make the request
+        request.send();
+
+      }
+
+      function weatherAPI() {
+      urlbase = "https://api.openweathermap.org/data/2.5/weather?";
+      latW = "lat=" + lat;
+      lonW = "lon=" + lon;
+      appid = "APPID=8d5d7668e5511c1644b6252c6d4509e2";
+      units = "units=metric";
+
+
+      myurl = 	urlbase +
+            latW  + "&" +
+            lonW  + "&" +
+            appid + "&" +
+            units;
+
+        reqajax = new XMLHttpRequest();
+        reqajax.open("GET",myurl);
+        reqajax.onreadystatechange = function () {
+          //debugger;
+          //console.log(reqajax.readyState);
+          if (reqajax.status == 200 && reqajax.readyState == 4) {
+            console.log(reqajax.responseText);
+            locationJS = JSON.parse(reqajax.responseText);
+
+            newdiv = document.createElement("div");
+            newh1=document.createElement('h1');
+            newh2=document.createElement('h2');
+            newimage=document.createElement('img');
+
+            newh1.innerHTML=locationJS.name; //location
+            var name = locationJS.name;
+            flickrPics(name);
+            newh2.innerHTML = locationJS.main.temp + "C"; //temperature
+            newimage.setAttribute("src", "http://openweathermap.org/img/w/"+locationJS.weather[0].icon+".png");
+
+            newdiv.appendChild(newh1);
+            newh2.appendChild(newimage);
+            newdiv.appendChild(newh2);
+            divcontent.appendChild(newdiv);
+
+          }
+        }
+        reqajax.send();
+        divcontent.innerHTML="";
+
+    }
+    map.addListener('click', weatherAPI); //on the click we start the function
+  }
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBU8gkJOlFvqgRH8gAW_TCYMwTsB4-okFc&callback=initMap"></script>
+</html>
